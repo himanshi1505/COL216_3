@@ -42,26 +42,26 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     CacheSet& set = sets[set_idx];
 
     CacheLine* line = find_line(tag, set_idx);
-    if (!line)
-    {
-        cout << 4 << endl << endl;
-    }
-    if (line && line->state == INVALID)
-    {
-        cout << 5 << endl << endl;
-    }
-    if (line && line->state == MODIFIED)
-    {
-        cout << 6 << endl << endl;
-    }
-    if (line && line->state == SHARED)
-    {
-        cout << 7 << endl << endl;
-    }
-    if (line && line->state == EXCLUSIVE)
-    {
-        cout << 8 << endl << endl;
-    }
+    // if (!line)
+    // {
+    //     cout << 4 << endl << endl;
+    // }
+    // if (line && line->state == INVALID)
+    // {
+    //     cout << 5 << endl << endl;
+    // }
+    // if (line && line->state == MODIFIED)
+    // {
+    //     cout << 6 << endl << endl;
+    // }
+    // if (line && line->state == SHARED)
+    // {
+    //     cout << 7 << endl << endl;
+    // }
+    // if (line && line->state == EXCLUSIVE)
+    // {
+    //     cout << 8 << endl << endl;
+    // }
     if (line && line->valid && line->state != INVALID) {
         // Cache hit
         if (op == 'R') {
@@ -81,6 +81,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     }
 
     //somethingn fring wrong here
+    if (bus.busy()) return false;
 
     // Cache miss
     misses++;
@@ -115,8 +116,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     *target_line = CacheLine(tag, INVALID, true, op == 'W', global_cycle);
     target_line->empty = false;
 
-    if (bus.busy()) return false;
-
+    
     bool found_in_other = false;
     bool found_in_M = false;
     int owner = -1;
@@ -146,29 +146,41 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             pending_state = SHARED;
             bus_traffic += B;
         } else {
+            //cout<<"here"<<endl;
             transfer_cycles = 100;
             bus.start(BusRd, addr, core_id, transfer_cycles);
             pending_state = EXCLUSIVE;
             bus_traffic += B;
         }
-    } else {
-        transfer_cycles = found_in_other ? 2 * B / 4 : 100;
-        bus.start(BusRdX, addr, core_id, transfer_cycles);
-        pending_state = MODIFIED;
-        bus_traffic += B;
-        if (found_in_other) {
-            process_busrdx(addr, all_caches);
+        //cout<<"bus read"<<bus.transfer_cycle_left()<<endl;
+    } else { // Write miss (BusRdX)
+        if (found_in_M) {
+            // Case 3: Dirty copy exists (M state)
+            transfer_cycles = 200; // 100 writeback + 100 transfer
+            bus.start(BusRdX, addr, core_id, transfer_cycles);
+            
+            // Force writeback and invalidate owner
+            all_caches[owner].find_line(tag, set_idx)->state = INVALID;
+            bus_traffic += 2 * B; // Count writeback + transfer
+        } 
+        else if (found_in_other) {
+            // Case 2: Clean copies exist (S/E states)
+            transfer_cycles = 100; // Cache-to-cache transfer
+            bus.start(BusRdX, addr, core_id, transfer_cycles);
+            process_busrdx(addr, all_caches); // Invalidate others
+            bus_traffic += B;
+        } 
+        else {
+            // Case 1: No other copies
+            transfer_cycles = 100; // Memory fetch
+            bus.start(BusRdX, addr, core_id, transfer_cycles);
+            bus_traffic += B;
         }
+       // cout<<"bus write"<<bus.transfer_cycle_left()<<endl;
+        pending_state = MODIFIED;
     }
-    if (transfer_cycles == 0)
-    {
-        exit(-1);
-    }
-    block_cycles_left = transfer_cycles;
-    if (block_cycles_left == 0 && blocked == true)
-    {
-        cout << 105 << endl;
-    }
+        block_cycles_left = transfer_cycles;
+    
     return true;
 }
 
