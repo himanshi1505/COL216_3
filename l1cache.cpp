@@ -98,11 +98,11 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             writebacks++;
             bus_traffic += B;
             total_cycles += 100; //making bus busy for eviction
-            //pls xhexk this test
+            
             bus.start(BusRdX, tag << (s + b), core_id, 100);
-            target_line->state = INVALID; // Writeback // do we need to increase the invalidation count?
             target_line->dirty = false; // Reset dirty bit
         }
+        target_line->state = INVALID; // Writeback // do we need to increase the invalidation count?
     }
     //now line is the line to be used, and hence the line will no more be empty
     target_line->tag = tag;

@@ -97,6 +97,7 @@ void Simulator::run() {
                     }
                     
                     line->state = cache.get_pending_state();
+                    line->lru_counter = global_cycle;
                     if (cache.get_pending_state() == MODIFIED) {
                         line->dirty = true;
                     }
