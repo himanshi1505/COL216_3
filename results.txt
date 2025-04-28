@@ -1,0 +1,40 @@
+Core 0:
+  Reads: 1489888
+  Writes: 1007480
+  Total cycles: 17063210
+  Idle cycles: 11858364
+  Miss rate: 0.04
+  Evictions: 108715
+  Writebacks: 26270
+  Invalidations: 8
+  Bus traffic: 4322304 bytes
+Core 1:
+  Reads: 1485857
+  Writes: 1004639
+  Total cycles: 20652184
+  Idle cycles: 15444317
+  Miss rate: 0.04
+  Evictions: 107903
+  Writebacks: 25819
+  Invalidations: 6
+  Bus traffic: 4281696 bytes
+Core 2:
+  Reads: 1492629
+  Writes: 1016562
+  Total cycles: 30205549
+  Idle cycles: 24466017
+  Miss rate: 0.05
+  Evictions: 114007
+  Writebacks: 29711
+  Invalidations: 33
+  Bus traffic: 4602784 bytes
+Core 3:
+  Reads: 1493736
+  Writes: 1010375
+  Total cycles: 33612934
+  Idle cycles: 28172224
+  Miss rate: 0.04
+  Evictions: 109173
+  Writebacks: 26215
+  Invalidations: 11
+  Bus traffic: 4334464 bytes
