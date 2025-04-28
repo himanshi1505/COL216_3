@@ -2,8 +2,6 @@
 #define BUS_H
 
 #include <cstdint>
-const int MEMORY_ACCESS_CYCLES = 100; // Cycles for read/write ops
-const int BUSUPGR_CYCLES = 1;         // Cycles for upgrades
 enum BusTransactionType { NONE, BusRd, BusRdX, BusUpgr };
 
 struct BusTransaction {

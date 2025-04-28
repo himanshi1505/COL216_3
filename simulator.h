@@ -21,7 +21,7 @@ private:
     std::vector<bool> done;
     std::vector<std::string> next_line;
     std::vector<bool> waiting_for_bus;
-    uint64_t global_cycle = 1;
+    uint64_t global_cycle = 0;
 
     bool all_done();
 };

@@ -60,13 +60,13 @@ void Simulator::run() {
         bus.tick();
         // cout << bus.transfer_cycle_left() << endl;
         // 2. Process snooping for ongoing transaction (all cores except source)
-        if (bus.transfer_cycle_left() == 1) {
-            for (int i = 0; i < 4; ++i) {
-                if (i != bus.current.source_core)
-                    caches[i].snoop(bus.current);
-                    //when to invalid, and how do we see if it is being accessed before updating
-            }
-        }
+        // if (bus.transfer_cycle_left() == 1) {
+        //     for (int i = 0; i < 4; ++i) {
+        //         if (i != bus.current.source_core)
+        //             caches[i].snoop(bus.current);
+        //             //when to invalid, and how do we see if it is being accessed before updating
+        //     }
+        // }
 
         // 3. For each core, in order, try to issue a memory op if not blocked
         for (int core = 0; core < 4; ++core) {
@@ -84,14 +84,23 @@ void Simulator::run() {
                 cache.total_cycles++;
                 if (cache.get_block_cycles_left() == 0) {
                     // Block done, install line if needed
+                    //test
                     uint32_t tag = cache.get_blocked_addr() >> (s + b);
                     uint32_t set_idx = (cache.get_blocked_addr() >> b) & ((1 << s) - 1);
                     CacheLine* line = cache.find_line(tag, set_idx);
-                   
+                    //endtest
                     
-                    if (line && cache.get_pending_state() != INVALID)
-                        line->state = cache.get_pending_state();
-                    cache.set_pending_state(INVALID); // WTF
+                    
+                    if (cache.get_pending_state() == INVALID || !line)
+                    {
+                        exit(-1);
+                    }
+                    
+                    line->state = cache.get_pending_state();
+                    if (cache.get_pending_state() == MODIFIED) {
+                        line->dirty = true;
+                    }
+                    cache.set_pending_state(INVALID);
                     cache.set_blocked(false);
                     
                 }
@@ -123,8 +132,7 @@ void Simulator::run() {
             char op;
             string addr_str;
             if (!(iss >> op >> addr_str)) {
-                done[core] = true;
-                continue;
+                exit(-1);
             }
             uint32_t addr = stoul(addr_str, nullptr, 16);
 
@@ -145,13 +153,8 @@ void Simulator::run() {
         
         // 4. Reset waiting_for_bus for next cycle if bus is now free
         if (!bus.busy()) {
-            fill(waiting_for_bus.begin(), waiting_for_bus.end(), false);
-            
+            fill(waiting_for_bus.begin(), waiting_for_bus.end(), false); 
         }
-        // if (global_cycle == 100000000)
-        // {
-        //     cout << -1 << endl;
-        // }
         global_cycle++;
     }
 }
@@ -163,10 +166,11 @@ void Simulator::print_stats(const string& outfilename) {
                 out << "Core " << i << ":\n";
                 out << "  Reads: " << caches[i].reads << "\n";
                 out << "  Writes: " << caches[i].writes << "\n";
+                out << "  Misses: " << caches[i].misses << "\n";
                 out << "  Total cycles: " << caches[i].total_cycles << "\n";
                 out << "  Idle cycles: " << caches[i].idle_cycles << "\n";
                 out << "  Miss rate: " << fixed << setprecision(2)
-                    << (double)caches[i].misses / (caches[i].reads + caches[i].writes) << "\n";
+                    << (double)caches[i].misses / (double) (caches[i].reads + caches[i].writes) << "\n";
                 out << "  Evictions: " << caches[i].evictions << "\n";
                 out << "  Writebacks: " << caches[i].writebacks << "\n";
                 out << "  Invalidations: " << caches[i].invalidations << "\n";

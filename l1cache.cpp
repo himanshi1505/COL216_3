@@ -5,10 +5,10 @@
 using namespace std;
 
 CacheLine::CacheLine() 
-    : tag(0), state(INVALID), valid(false), dirty(false), lru_counter(0) {}
+    : tag(0), state(INVALID), dirty(false), lru_counter(-1) {}
 
-CacheLine::CacheLine(uint32_t t, MESIState s, bool v, bool d, uint64_t l) 
-    : tag(t), state(s), valid(v), dirty(d), lru_counter(l) {}
+CacheLine::CacheLine(uint32_t t, MESIState s, bool d, uint64_t l) 
+    : tag(t), state(s),  dirty(d), lru_counter(l) {}
 
 CacheSet::CacheSet(int E) : lines(E) {}
 
@@ -21,13 +21,16 @@ L1Cache::L1Cache(int s_, int E_, int b_, int core_id_)
 
 CacheLine* L1Cache::find_line(uint32_t tag, uint32_t set_idx) {
     for (auto& line : sets[set_idx].lines) {
-        if (line.valid && line.tag == tag) {
+        //cout << tag << endl << line.tag << endl << endl;
+        if ( line.tag == tag) {
+            //cout << 5 << endl;
             return &line;
         }
     }
     return nullptr;
 }
 
+//test
 CacheLine* L1Cache::find_lru(uint32_t set_idx) {
     auto& lines = sets[set_idx].lines;
     return &(*std::min_element(lines.begin(), lines.end(),
@@ -40,43 +43,27 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     uint32_t tag = addr >> (s + b);
     uint32_t set_idx = (addr >> b) & ((1 << s) - 1);
     CacheSet& set = sets[set_idx];
+    //cout<<"set_idx: " << set_idx << endl;
 
     CacheLine* line = find_line(tag, set_idx);
-    // if (!line)
-    // {
-    //     cout << 4 << endl << endl;
-    // }
-    // if (line && line->state == INVALID)
-    // {
-    //     cout << 5 << endl << endl;
-    // }
-    // if (line && line->state == MODIFIED)
-    // {
-    //     cout << 6 << endl << endl;
-    // }
-    // if (line && line->state == SHARED)
-    // {
-    //     cout << 7 << endl << endl;
-    // }
-    // if (line && line->state == EXCLUSIVE)
-    // {
-    //     cout << 8 << endl << endl;
-    // }
-    if (line && line->valid && line->state != INVALID) {
+ 
+
+    if (line  && line->state != INVALID) {
         // Cache hit
         if (op == 'R') {
             reads++;
         } else if (op == 'W') {
             writes++;
             if (line->state == SHARED) {
-                if (bus.busy()) return false;
-                bus.start(BusUpgr, addr, core_id, 1);
+                // if (bus.busy()) return false; //invalidate can be sent even if bus is busy
+                //bus.start(BusUpgr, addr, core_id, 1);
                 process_busupgr(addr, all_caches);
-            }
+            }   
             line->state = MODIFIED;
             line->dirty = true;
         }
         line->lru_counter = global_cycle;
+        //cout << 2 <<  endl;;
         return true;
     }
 
@@ -88,7 +75,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     if (op == 'R') reads++; else writes++;
 
     blocked = true;
-    blocked_op = op;
+
     blocked_addr = addr;
     
     
@@ -102,32 +89,37 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     }
 
     // 2. If no invalid line found, evict LRU
+
+    //test
     if (!target_line) {
         target_line = find_lru(set_idx);
         evictions++;  // True eviction
         if (target_line->dirty) {
             writebacks++;
             bus_traffic += B;
-            total_cycles += 100;
+            total_cycles += 100; //making bus busy for eviction
+            //pls xhexk this test
+            bus.start(BusRdX, tag << (s + b), core_id, 100);
+            target_line->state = INVALID; // Writeback // do we need to increase the invalidation count?
+            target_line->dirty = false; // Reset dirty bit
         }
     }
-
-    // 3. Use target_line (whether invalid or LRU)
-    *target_line = CacheLine(tag, INVALID, true, op == 'W', global_cycle);
+    //now line is the line to be used, and hence the line will no more be empty
+    target_line->tag = tag;
+    target_line->lru_counter = global_cycle; //lrcounter is set to start touch of change 
     target_line->empty = false;
 
     
     bool found_in_other = false;
     bool found_in_M = false;
-    int owner = -1;
+    //cout<<all_caches.size()<<endl;
     for (size_t i = 0; i < all_caches.size(); ++i) {
         if (i == static_cast<size_t>(core_id)) continue;
         CacheLine* other = all_caches[i].find_line(tag, set_idx);
-        if (other && other->valid && other->state != INVALID) {
+        if (other && other->state != INVALID) {
             found_in_other = true;
             if (other->state == MODIFIED) { 
                 found_in_M = true; 
-                owner = i; 
             }
         }
     }
@@ -135,14 +127,17 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     int transfer_cycles = 0;
     if (op == 'R') {
         if (found_in_M) {
-            transfer_cycles = 2 * B / 4;
+            transfer_cycles = (2 * B/4 ) + 100; // 100 for writeback + transfer
+            writebacks++;
             bus.start(BusRd, addr, core_id, transfer_cycles);
-            all_caches[owner].find_line(tag, set_idx)->state = SHARED;
+            process_busrd(addr, all_caches); // change others to SHARED
+            //all_caches[owner].find_line(tag, set_idx)->state = SHARED;
             pending_state = SHARED;
             bus_traffic += B;
-        } else if (found_in_other) {
-            transfer_cycles = 2 * B / 4;
+        } else if (found_in_other) { //several S copy, or one cache has E copy
+            transfer_cycles = 2 * B/4;
             bus.start(BusRd, addr, core_id, transfer_cycles);
+            process_busrd(addr, all_caches); // Invalidate others
             pending_state = SHARED;
             bus_traffic += B;
         } else {
@@ -158,9 +153,11 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             // Case 3: Dirty copy exists (M state)
             transfer_cycles = 200; // 100 writeback + 100 transfer
             bus.start(BusRdX, addr, core_id, transfer_cycles);
+            writebacks++;
             
             // Force writeback and invalidate owner
-            all_caches[owner].find_line(tag, set_idx)->state = INVALID;
+            //all_caches[owner].find_line(tag, set_idx)->state = INVALID;
+            process_busrdx(addr, all_caches); // Invalidate others
             bus_traffic += 2 * B; // Count writeback + transfer
         } 
         else if (found_in_other) {
@@ -189,7 +186,7 @@ void L1Cache::snoop(const BusTransaction& trans) {
     uint32_t tag = trans.addr >> (s + b);
     uint32_t set_idx = (trans.addr >> b) & ((1 << s) - 1);
     CacheLine* line = find_line(tag, set_idx);
-    if (!line || !line->valid || line->state == INVALID) return;
+    if (!line || line->state == INVALID) return;
 
     switch (trans.type) {
         case BusRd:
@@ -202,13 +199,11 @@ void L1Cache::snoop(const BusTransaction& trans) {
             }
             break;
         case BusRdX:
-            line->valid = false;
             line->state = INVALID;
             invalidations++;
             break;
         case BusUpgr:
             invalidations++;
-            line->valid = false;
             line->state = INVALID;
             break;
         default:

@@ -1,4 +1,5 @@
 #include "bus.h"
+#include <iostream>
 
 BusTransaction::BusTransaction(BusTransactionType t, uint32_t a, int s, int c) 
     : type(t), addr(a), source_core(s), transfer_cycles_left(c) {}
@@ -14,8 +15,12 @@ void Bus::start(BusTransactionType type, uint32_t addr, int core, int cycles) {
 void Bus::tick() {
     if (current.type != NONE) {
         current.transfer_cycles_left--;
-        if (current.transfer_cycles_left <= 0) {
+        if (current.transfer_cycles_left == 0) {
             current.type = NONE;
+        }
+        if (current.transfer_cycles_left < 0)
+        {
+            exit(-1);
         }
     }
 }
