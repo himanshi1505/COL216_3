@@ -5,10 +5,10 @@
 using namespace std;
 
 CacheLine::CacheLine() 
-    : tag(0), state(INVALID), dirty(false), lru_counter(-1) {}
+    : tag(0), state(INVALID), dirty(false), lru_counter(-1), empty(true) {}
 
-CacheLine::CacheLine(uint32_t t, MESIState s, bool d, uint64_t l) 
-    : tag(t), state(s),  dirty(d), lru_counter(l) {}
+CacheLine::CacheLine(uint32_t t, MESIState s, bool d, uint64_t l, bool e) 
+    : tag(t), state(s),  dirty(d), lru_counter(l), empty(e) {}
 
 CacheSet::CacheSet(int E) : lines(E) {}
 
@@ -22,7 +22,7 @@ L1Cache::L1Cache(int s_, int E_, int b_, int core_id_)
 CacheLine* L1Cache::find_line(uint32_t tag, uint32_t set_idx) {
     for (auto& line : sets[set_idx].lines) {
         //cout << tag << endl << line.tag << endl << endl;
-        if ( line.tag == tag) {
+        if ( line.tag == tag ) {
             //cout << 5 << endl;
             return &line;
         }
@@ -35,7 +35,7 @@ CacheLine* L1Cache::find_lru(uint32_t set_idx) {
     auto& lines = sets[set_idx].lines;
     return &(*std::min_element(lines.begin(), lines.end(),
         [](const CacheLine& a, const CacheLine& b) { 
-            return a.lru_counter < b.lru_counter; 
+            return a.lru_counter <= b.lru_counter; 
         }));
 }
 
@@ -50,29 +50,40 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
 
     if (line  && line->state != INVALID) {
         // Cache hit
+        line->lru_counter = global_cycle;
         if (op == 'R') {
             reads++;
         } else if (op == 'W') {
-            writes++;
+            
+            
             if (line->state == SHARED) {
                 // if (bus.busy()) return false; //invalidate can be sent even if bus is busy
                 //bus.start(BusUpgr, addr, core_id, 1);
+                if (bus.busy()) return false;
                 process_busupgr(addr, all_caches);
             }   
+            writes++;
             line->state = MODIFIED;
             line->dirty = true;
         }
-        line->lru_counter = global_cycle;
+        //line->lru_counter = global_cycle;
         //cout << 2 <<  endl;;
         return true;
     }
-
+  
     //somethingn fring wrong here
     if (bus.busy()) return false;
 
     // Cache miss
     misses++;
-    if (op == 'R') reads++; else writes++;
+    if (op == 'R'){
+        reads++;
+        //cout<<"read miss"<<global_cycle<<endl;
+    }  else{
+        writes++;
+        //cout<<"write miss"<<global_cycle<<endl;
+
+    } 
 
     blocked = true;
 
@@ -103,6 +114,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             target_line->dirty = false; // Reset dirty bit
         }
         target_line->state = INVALID; // Writeback // do we need to increase the invalidation count?
+       
     }
     //now line is the line to be used, and hence the line will no more be empty
     target_line->tag = tag;
@@ -127,13 +139,14 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     int transfer_cycles = 0;
     if (op == 'R') {
         if (found_in_M) {
-            transfer_cycles = (2 * B/4 ) + 100; // 100 for writeback + transfer
+            transfer_cycles = (2 * B/4 )+100 ; // transfer and writeback
             writebacks++;
             bus.start(BusRd, addr, core_id, transfer_cycles);
             process_busrd(addr, all_caches); // change others to SHARED
             //all_caches[owner].find_line(tag, set_idx)->state = SHARED;
             pending_state = SHARED;
             bus_traffic += B;
+            
         } else if (found_in_other) { //several S copy, or one cache has E copy
             transfer_cycles = 2 * B/4;
             bus.start(BusRd, addr, core_id, transfer_cycles);
@@ -142,7 +155,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             bus_traffic += B;
         } else {
             //cout<<"here"<<endl;
-            transfer_cycles = 100;
+            transfer_cycles = 100; //read from mem to cache
             bus.start(BusRd, addr, core_id, transfer_cycles);
             pending_state = EXCLUSIVE;
             bus_traffic += B;
@@ -151,7 +164,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     } else { // Write miss (BusRdX)
         if (found_in_M) {
             // Case 3: Dirty copy exists (M state)
-            transfer_cycles = 200; // 100 writeback + 100 transfer
+            transfer_cycles = 200; // 100 writeback + 100 read from memory
             bus.start(BusRdX, addr, core_id, transfer_cycles);
             writebacks++;
             
@@ -162,14 +175,14 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
         } 
         else if (found_in_other) {
             // Case 2: Clean copies exist (S/E states)
-            transfer_cycles = 100; // Cache-to-cache transfer
+            transfer_cycles = 100; // read from memory to cache
             bus.start(BusRdX, addr, core_id, transfer_cycles);
             process_busrdx(addr, all_caches); // Invalidate others
             bus_traffic += B;
         } 
         else {
             // Case 1: No other copies
-            transfer_cycles = 100; // Memory fetch
+            transfer_cycles = 100; // read from memory to cache
             bus.start(BusRdX, addr, core_id, transfer_cycles);
             bus_traffic += B;
         }
@@ -200,10 +213,12 @@ void L1Cache::snoop(const BusTransaction& trans) {
             break;
         case BusRdX:
             line->state = INVALID;
+            line->empty = true; // Mark as empty
             invalidations++;
             break;
         case BusUpgr:
             invalidations++;
+           line->empty = true; // Mark as empty
             line->state = INVALID;
             break;
         default:

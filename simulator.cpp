@@ -73,7 +73,9 @@ void Simulator::run() {
 
             L1Cache& cache = caches[core];
             
-            if (done[core] && !cache.get_blocked()) continue;
+            //if (done[core] && !cache.get_blocked()) continue;
+            if (done[core] && cache.get_blocked()) exit(-1);
+            if (done[core]) continue;
 
             // If blocked on miss, count idle cycles, decrement block
             if (cache.get_blocked()) {
@@ -92,7 +94,7 @@ void Simulator::run() {
                     
                     
                     if (cache.get_pending_state() == INVALID || !line)
-                    {
+                    {  
                         exit(-1);
                     }
                     
@@ -170,7 +172,7 @@ void Simulator::print_stats(const string& outfilename) {
                 out << "  Misses: " << caches[i].misses << "\n";
                 out << "  Total cycles: " << caches[i].total_cycles << "\n";
                 out << "  Idle cycles: " << caches[i].idle_cycles << "\n";
-                out << "  Miss rate: " << fixed << setprecision(2)
+                out << "  Miss rate: " << fixed << setprecision(4)
                     << (double)caches[i].misses / (double) (caches[i].reads + caches[i].writes) << "\n";
                 out << "  Evictions: " << caches[i].evictions << "\n";
                 out << "  Writebacks: " << caches[i].writebacks << "\n";

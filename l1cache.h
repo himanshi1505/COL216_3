@@ -9,13 +9,12 @@ enum MESIState { INVALID, SHARED, EXCLUSIVE, MODIFIED };
 
 struct CacheLine {
     uint32_t tag;
-    MESIState state;
-   
-    bool empty = true;
-    bool dirty = false;
+    MESIState state=INVALID;
+    bool dirty=false;
     uint64_t lru_counter=-1;
+    bool empty=true;
     CacheLine();
-    CacheLine(uint32_t t, MESIState s, bool d, uint64_t l);
+    CacheLine(uint32_t t, MESIState s, bool d, uint64_t l, bool e);
 };
 
 struct CacheSet {
