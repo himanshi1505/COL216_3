@@ -56,16 +56,15 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             
             
             if (line->state == SHARED) {
-                // if (bus.busy()) return false; //invalidate can be sent even if bus is busy
+     
                 //bus.start(BusUpgr, addr, core_id, 1);
-                if (bus.busy()) return false; //ASSUMPTION BUS CANT BE USED FOR INVALIDATIONS IF BUSY
-                process_busupgr(addr, all_caches);
+                if (bus.busy()) return false; //ASSUMPTION BUS CANT BE USED FOR INVALIDATIONS IF BUSY 
                 invalidations++;
-                //int x = 0;
+                // int x = 0;
                 // for (size_t i = 0; i < all_caches.size(); ++i) {
                 //     if (i == static_cast<size_t>(core_id)) continue;
                 //     CacheLine* other = all_caches[i].find_line(tag, set_idx);
-                //     invalidations++;
+                   
                    
                 //     if (other && other->state == SHARED) {
                 //         x++;
@@ -75,6 +74,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
                 // {
                 //     exit(-1);
                 // }
+                 process_busupgr(addr, all_caches);
             }   
             //ASSUMPTION( DO NOTY WRITE) WE DONT HAVE TO WRITEBACK IN CASE OF M hit
             writes++;
@@ -112,6 +112,30 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     if (!target_line) {
         target_line = find_lru(set_idx);
         evictions++;  // True eviction
+        if (target_line->state == SHARED)
+        {
+            int x = 0;
+            for (size_t i = 0; i < all_caches.size(); ++i) {
+                if (i == static_cast<size_t>(core_id)) continue;
+                CacheLine* other = all_caches[i].find_line(tag, set_idx);
+                if (other && other->state == SHARED)
+                {
+                    x++;
+                }
+            }
+            if (x == 1)
+            {
+                for (size_t i = 0; i < all_caches.size(); ++i) {
+                    if (i == static_cast<size_t>(core_id)) continue;
+                    CacheLine* other = all_caches[i].find_line(tag, set_idx);
+                    if (other && other->state == SHARED)
+                    {
+                        other->state = EXCLUSIVE;
+                    }
+                }
+            }
+        }
+        
         if (target_line->dirty) {
             writebacks++;
             bus_traffic += B;
@@ -123,6 +147,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             return false;
 
         }
+
         target_line->state = INVALID; // Writeback // do we need to increase the invalidation count?
        
     }
@@ -253,7 +278,9 @@ void L1Cache::snoop(const BusTransaction& trans) {
 void L1Cache::process_busrd(uint32_t addr, std::vector<L1Cache>& all_caches) {
     for (auto& cache : all_caches) {
         if (cache.core_id != core_id)
+        {
             cache.snoop(BusTransaction(BusRd, addr, core_id));
+        }        
     }
 }
 
@@ -267,6 +294,8 @@ void L1Cache::process_busrdx(uint32_t addr, std::vector<L1Cache>& all_caches) {
 void L1Cache::process_busupgr(uint32_t addr, std::vector<L1Cache>& all_caches) {
     for (auto& cache : all_caches) {
         if (cache.core_id != core_id)
+        {  
             cache.snoop(BusTransaction(BusUpgr, addr, core_id));
+        }
     }
 }
