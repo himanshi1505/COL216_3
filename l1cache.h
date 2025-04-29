@@ -39,13 +39,11 @@ public:
     void set_block_cycles_left(int cycles) { block_cycles_left = cycles; }
     void set_blocked_addr(uint32_t addr) { blocked_addr = addr; }
     void set_pending_state(MESIState state) { pending_state = state; }
-    void increment_idle_cycles() { idle_cycles++; }
-    void increment_total_cycles() { total_cycles++; }
     
     // Statistics
     int reads = 0, writes = 0, misses = 0, evictions = 0;
     int writebacks = 0, invalidations = 0, idle_cycles = 0;
-    int total_cycles = 0, bus_traffic = 0;
+    int execution_cycles = 0, bus_traffic = 0;
     
 private:
     int s, E, b, S, B, core_id;

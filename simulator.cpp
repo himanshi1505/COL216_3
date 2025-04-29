@@ -80,10 +80,10 @@ void Simulator::run() {
             // If blocked on miss, count idle cycles, decrement block
             if (cache.get_blocked()) {
                 //cout<<"global_cycle"<<global_cycle << endl;
-                cache.idle_cycles++;
+                
                 cache.set_block_cycles_left(cache.get_block_cycles_left()-1);
                 
-                cache.total_cycles++;
+              
                 if (cache.get_block_cycles_left() == 0) {
                     // Block done, install line if needed
                     //test
@@ -118,7 +118,7 @@ void Simulator::run() {
             // If bus is busy, can't issue a new bus transaction (but can do cache hits)
             if (waiting_for_bus[core]) {  //wtf
                 cache.idle_cycles++;
-                cache.total_cycles++;
+       
               // cout << 9 << endl;
                 continue;
             }
@@ -143,7 +143,7 @@ void Simulator::run() {
            // cout << core << endl;
             bool issued = cache.try_access(op, addr, bus, caches, global_cycle);
 
-            cache.total_cycles++;
+        
             if (issued) {
                 // Read next instruction for this core for next cycle
                 if (!getline(*tracefiles[core], next_line[core]))
@@ -170,7 +170,7 @@ void Simulator::print_stats(const string& outfilename) {
                 out << "  Reads: " << caches[i].reads << "\n";
                 out << "  Writes: " << caches[i].writes << "\n";
                 out << "  Misses: " << caches[i].misses << "\n";
-                out << "  Total cycles: " << caches[i].total_cycles << "\n";
+                out << "  Execution cycles: " << caches[i].execution_cycles << "\n";
                 out << "  Idle cycles: " << caches[i].idle_cycles << "\n";
                 out << "  Miss rate: " << fixed << setprecision(4)
                     << (double)caches[i].misses / (double) (caches[i].reads + caches[i].writes) << "\n";
@@ -189,3 +189,32 @@ bool Simulator::all_done() {
                     return false;
             return true;
 }
+
+
+//execution cycles - 12. Execution cycles mean the core is actively processing an instruction.
+//If there is a cache hit, it takes 1 cycle.
+//If there is a cache miss, the core is stalled for many cycles (counted under idle cycles), and then spends 1 execution cycle to complete the instruction after the data is available.
+
+//bus access - 14. No, invalidate signals do not need to retry.
+//They are logical events that happen immediately without needing exclusive bus access.
+//You do not wait or retry invalidates.
+//Bus being busy only affects new data transfers, not invalidate signa
+
+//ASSUMPTION IN CASE OF WRITE MISS DATA IS TRANSFERRED THROUGH MEMORY ONLY NO CACHE TO CACHE EVER
+
+//cycles -18. Idle cycles include any cycles where the processor is stalled waiting for a cache miss to be serviced (memory fetch or cache-to-cache transfer).
+//Execution cycles include cycles where instructions are processed (hits) or bus requests are being made or attempted.
+//Total cycles = execution cycles + idle cycles.
+
+
+//bus access - 19. Corrected assumption 
+//At any point, the bus processes only one request at a time, whether it is a read miss, a write miss, a snooping invalidate, or a data transfer.
+//New bus requests (including snooping actions) are only initiated when the bus becomes completely free.
+//Thus, snooping and bus transactions are serialized, and happen strictly one after the other.
+
+//cycles 22. Idle cycles = cycles when core is stalled and cannot issue a request.
+//Execution cycles = cycles when instructions are actively processed or waiting after bus request is issued.
+//23. The time taken to copy back the block from M state cache to memory is not considered part of the execution cycles of the processor that had the miss. 
+//It is an independent bus transaction handled after the read miss is completed.
+//So, the requesting core continues with its execution once it receives the data, and the writeback happens separately.
+
