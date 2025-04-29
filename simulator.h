@@ -11,7 +11,7 @@ public:
     Simulator(int s_, int E_, int b_, const std::string& tracebase);
     ~Simulator();
     void run();
-    void print_stats(const std::string& outfilename);
+    void print_stats(const std::string& outfilename, const std::string& tracebase);
 
 private:
     int s, E, b, S, B;

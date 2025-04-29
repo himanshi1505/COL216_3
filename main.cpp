@@ -33,6 +33,9 @@ int main(int argc, char* argv[]) {
     }
     Simulator sim(s, E, b, tracebase);
     sim.run();
-    sim.print_stats(outfilename);
+
+    
+
+    sim.print_stats(outfilename, tracebase);
     return 0;
 }

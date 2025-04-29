@@ -162,9 +162,21 @@ void Simulator::run() {
     }
 }
 
-void Simulator::print_stats(const string& outfilename) {
+void Simulator::print_stats(const string& outfilename, const string& tracebase) {
     // ... existing print_stats implementation ...
     ofstream out(outfilename);
+            out << "Simulation Parameters:\n";
+            out << "Trace Prefix: " << tracebase << "\n";
+            out << "Set Index Bits: " << s << "\n";
+            out << "Associativity: " << E << "\n";
+            out << "Block Bits: " << b << "\n";
+            out << "Block Size (Bytes): " << pow(2,b) << "\n";
+            out << "Number of Sets: " << pow(2,s) << "\n";
+            out << "Cache Size (KB per core): TO BE CONFIRMED " << pow(2,s) * pow(2,b) * E /1024 << "\n";
+            out << "MESI Protocol: Enabled\n";
+            out << "Write Policy: Write-back, Write-allocate\n";
+            out << "Replacement Policy: LRU\n";
+            out << "Bus: Central snooping bus\n";
             for (int i = 0; i < 4; ++i) {
                 out << "Core " << i << ":\n";
                 out << "  Reads: " << caches[i].reads << "\n";
@@ -179,6 +191,9 @@ void Simulator::print_stats(const string& outfilename) {
                 out << "  Invalidations: " << caches[i].invalidations << "\n";
                 out << "  Bus traffic: " << caches[i].bus_traffic << " bytes\n";
             }
+            out << "\nOverall Bus Summary:\n";
+            out << "Total Bus Transactions: TO BE DONE" << "\n";
+            out << "Total Bus Traffic (Bytes): TO BE DONE"<< "\n";
         }
 
 
