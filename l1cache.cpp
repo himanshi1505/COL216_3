@@ -74,7 +74,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
                 // {
                 //     exit(-1);
                 // }
-                 process_busupgr(addr, all_caches);
+                process_busupgr(addr, all_caches);
             }   
             //ASSUMPTION( DO NOTY WRITE) WE DONT HAVE TO WRITEBACK IN CASE OF M hit
             writes++;
@@ -145,7 +145,6 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             target_line->state = INVALID;
             target_line->empty = true;
             return false;
-
         }
 
         target_line->state = INVALID; // Writeback // do we need to increase the invalidation count?

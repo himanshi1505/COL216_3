@@ -173,7 +173,7 @@ void Simulator::print_stats(const string& outfilename) {
                 out << "  Execution cycles: " << caches[i].execution_cycles << "\n";
                 out << "  Idle cycles: " << caches[i].idle_cycles << "\n";
                 out << "  Miss rate: " << fixed << setprecision(4)
-                    << (double)caches[i].misses / (double) (caches[i].reads + caches[i].writes) << "\n";
+                    << (double)100 * caches[i].misses / (double)  (caches[i].reads + caches[i].writes) << "%\n";
                 out << "  Evictions: " << caches[i].evictions << "\n";
                 out << "  Writebacks: " << caches[i].writebacks << "\n";
                 out << "  Invalidations: " << caches[i].invalidations << "\n";
