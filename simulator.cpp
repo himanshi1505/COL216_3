@@ -50,6 +50,7 @@ void Simulator::run() {
     }
     
 
+
     while (!all_done()) {
         // 1. Process bus (tick down busy cycles)
        
@@ -121,6 +122,10 @@ void Simulator::run() {
             fill(waiting_for_bus.begin(), waiting_for_bus.end(), false); 
         }
         global_cycle++;
+        if (bus.transfer_cycle_left() == 0)
+        {
+            bus.change();
+        }
     }
 }
 

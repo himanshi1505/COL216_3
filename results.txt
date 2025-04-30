@@ -11,50 +11,50 @@ Write Policy: Write-back, Write-allocate
 Replacement Policy: LRU
 Bus: Central snooping bus
 Core 0:
-  Reads: 1489888
-  Writes: 1007461
-  Misses: 35710
-  Execution cycles: 5666317
-  Idle cycles: 3532235
-  Miss rate: 1.43%
-  Evictions: 35544
-  Writebacks: 7156
-  Invalidations: 34
-  Bus traffic: 1371456 bytes
+  Reads: 3
+  Writes: 0
+  Misses: 2
+  Execution cycles: 219
+  Idle cycles: 100
+  Miss rate: 66.67%
+  Evictions: 0
+  Writebacks: 1
+  Invalidations: 0
+  Bus traffic: 64 bytes
 Core 1:
-  Reads: 1485857
-  Writes: 1004611
-  Misses: 35194
-  Execution cycles: 5598200
-  Idle cycles: 4666837
-  Miss rate: 1.41%
-  Evictions: 35030
-  Writebacks: 6785
-  Invalidations: 37
-  Bus traffic: 1342784 bytes
+  Reads: 0
+  Writes: 1
+  Misses: 1
+  Execution cycles: 101
+  Idle cycles: 101
+  Miss rate: 100.00%
+  Evictions: 0
+  Writebacks: 0
+  Invalidations: 1
+  Bus traffic: 64 bytes
 Core 2:
-  Reads: 1492629
-  Writes: 1016428
-  Misses: 40687
-  Execution cycles: 6142465
-  Idle cycles: 9737463
-  Miss rate: 1.62%
-  Evictions: 40502
-  Writebacks: 10475
-  Invalidations: 127
-  Bus traffic: 1637248 bytes
+  Reads: 0
+  Writes: 1
+  Misses: 1
+  Execution cycles: 101
+  Idle cycles: 319
+  Miss rate: 100.00%
+  Evictions: 0
+  Writebacks: 0
+  Invalidations: 1
+  Bus traffic: 32 bytes
 Core 3:
-  Reads: 1493736
-  Writes: 1009391
-  Misses: 35882
-  Execution cycles: 5683195
-  Idle cycles: 11779546
-  Miss rate: 1.43%
-  Evictions: 35686
-  Writebacks: 6968
-  Invalidations: 9
-  Bus traffic: 1371936 bytes
+  Reads: 0
+  Writes: 1
+  Misses: 1
+  Execution cycles: 201
+  Idle cycles: 420
+  Miss rate: 100.00%
+  Evictions: 0
+  Writebacks: 1
+  Invalidations: 1
+  Bus traffic: 64 bytes
 
 Overall Bus Summary:
-Total Bus Transactions: 178752
-Total Bus Traffic (Bytes): 5723424
+Total Bus Transactions: 5
+Total Bus Traffic (Bytes): 224

@@ -178,7 +178,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             writebacks++;
             bus_transaction++;
             bus.start(BusRd, addr, core_id, transfer_cycles);
-            process_busrd(addr, all_caches); // change others to SHARED
+            process_busrd(addr, all_caches); 
             pending_state = SHARED;
             bus_traffic += B;
             

@@ -16,13 +16,18 @@ void Bus::tick() {
     if (current.type != NONE) {
         current.transfer_cycles_left--;
         if (current.transfer_cycles_left == 0) {
-            current.type = NONE;
+            
         }
         if (current.transfer_cycles_left < 0)
         {
             exit(-1);
         }
     }
+}
+
+void Bus::change()
+{
+    current.type = NONE;
 }
 
 int Bus::transfer_cycle_left()

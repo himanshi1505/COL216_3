@@ -19,6 +19,7 @@ public:
     bool busy() const;
     void start(BusTransactionType type, uint32_t addr, int core, int cycles);
     void tick();
+    void change();
     int transfer_cycle_left();
 };
 
