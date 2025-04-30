@@ -39,7 +39,7 @@ This simulator implements a detailed model of quad-core L1 data caches connected
         or 
   - to compile: make 
     then
-     ./L1simulate -t traces/tracebase -s 5 -E 2 -b 5 -o results.txt
+     ./L1simulate -t {tracebase} -s {s} -E {E} -b {b} -o results.txt
 
   - to clean use : make clean
 
