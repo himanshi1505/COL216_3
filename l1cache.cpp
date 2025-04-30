@@ -58,7 +58,17 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             if (line->state == SHARED) {
      
                 //bus.start(BusUpgr, addr, core_id, 1);
-                if (bus.busy()) return false; //ASSUMPTION BUS CANT BE USED FOR INVALIDATIONS IF BUSY 
+                if (get_blocked() && bus.busy())
+                {
+                    execution_cycles++;
+                    return false;
+                }
+                else if (bus.busy())
+                {
+                    idle_cycles++;
+                    return false;
+                }
+                         //ASSUMPTION BUS CANT BE USED FOR INVALIDATIONS IF BUSY 
                 invalidations++;
                 // int x = 0;
                 // for (size_t i = 0; i < all_caches.size(); ++i) {
@@ -74,6 +84,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
                 // {
                 //     exit(-1);
                 // }
+                bus_transaction++;
                 process_busupgr(addr, all_caches);
             }   
             //ASSUMPTION( DO NOTY WRITE) WE DONT HAVE TO WRITEBACK IN CASE OF M hit
@@ -88,7 +99,16 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     }
   
     //somethingn fring wrong here
-    if (bus.busy()) return false;
+    if (get_blocked() && bus.busy())
+    {
+        execution_cycles++;
+        return false;
+    }
+    else if (bus.busy())
+    {
+        idle_cycles++;
+        return false;
+    }
 
     // Cache miss
     
@@ -139,7 +159,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
         if (target_line->dirty) {
             writebacks++;
             bus_traffic += B;
-           
+            bus_transaction++;
             bus.start(BusRdX, tag << (s + b), core_id, 100);
             target_line->dirty = false; // Reset dirty bit
             target_line->state = INVALID;
@@ -165,7 +185,6 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
         //cout<<"write miss"<<global_cycle<<endl;
 
     } 
-    execution_cycles++;
 
     
     bool found_in_other = false;
@@ -187,6 +206,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
         if (found_in_M) {
             transfer_cycles = (2 * B/4 )+100 ; // transfer and writeback  //ASSUMPTION CHECK HOW MANY TRANSFER CYCLE IN EACH CASE
             writebacks++;
+            bus_transaction++;
             bus.start(BusRd, addr, core_id, transfer_cycles);
             process_busrd(addr, all_caches); // change others to SHARED
             //all_caches[owner].find_line(tag, set_idx)->state = SHARED;
@@ -195,6 +215,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             
         } else if (found_in_other) { //several S copy, or one cache has E copy
             transfer_cycles = 2 * B/4;
+            bus_transaction++;
             bus.start(BusRd, addr, core_id, transfer_cycles);
             process_busrd(addr, all_caches); // Invalidate others
             pending_state = SHARED;
@@ -202,6 +223,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
         } else {
             //cout<<"here"<<endl;
             transfer_cycles = 100; //read from mem to cache
+            bus_transaction++;
             bus.start(BusRd, addr, core_id, transfer_cycles);
             pending_state = EXCLUSIVE;
             bus_traffic += B;
@@ -214,7 +236,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             transfer_cycles = 200; // 100 writeback + 100 read from memory
             bus.start(BusRdX, addr, core_id, transfer_cycles);
             writebacks++;
-            
+            bus_transaction++;
             // Force writeback and invalidate owner
             //all_caches[owner].find_line(tag, set_idx)->state = INVALID;
             process_busrdx(addr, all_caches); // Invalidate others
@@ -225,6 +247,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             // Case 2: Clean copies exist (S/E states)
             transfer_cycles = 100; // read from memory to cache
             bus.start(BusRdX, addr, core_id, transfer_cycles);
+            bus_transaction++;
             process_busrdx(addr, all_caches); // Invalidate others
             invalidations++;
             bus_traffic += B;
@@ -234,11 +257,13 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             transfer_cycles = 100; // read from memory to cache
             bus.start(BusRdX, addr, core_id, transfer_cycles);
             bus_traffic += B;
+            bus_transaction++;
         }
        // cout<<"bus write"<<bus.transfer_cycle_left()<<endl;
         pending_state = MODIFIED;
     }
         block_cycles_left = transfer_cycles;
+    execution_cycles++;
     return true;
 }
 

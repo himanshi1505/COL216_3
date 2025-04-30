@@ -27,6 +27,6 @@ clean:
 
 # Run the simulation with example parameters
 run: $(TARGET)
-	./$(TARGET) -t app1 -s 6 -E 2 -b 5 -o results.txt
+	./$(TARGET) -t app2 -s 6 -E 2 -b 5 -o results.txt
 
 .PHONY: all clean run

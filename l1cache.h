@@ -43,7 +43,7 @@ public:
     // Statistics
     int reads = 0, writes = 0, misses = 0, evictions = 0;
     int writebacks = 0, invalidations = 0, idle_cycles = 0;
-    int execution_cycles = 0, bus_traffic = 0;
+    int execution_cycles = 0, bus_traffic = 0, bus_transaction = 0, total_traffic = 0 ;
     
 private:
     int s, E, b, S, B, core_id;

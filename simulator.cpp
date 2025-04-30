@@ -82,7 +82,7 @@ void Simulator::run() {
                 //cout<<"global_cycle"<<global_cycle << endl;
                 
                 cache.set_block_cycles_left(cache.get_block_cycles_left()-1);
-                
+                cache.execution_cycles++;
               
                 if (cache.get_block_cycles_left() == 0) {
                     // Block done, install line if needed
@@ -164,6 +164,8 @@ void Simulator::run() {
 
 void Simulator::print_stats(const string& outfilename, const string& tracebase) {
     // ... existing print_stats implementation ...
+    int total_traffic = 0;
+    int total_transaction = 0;
     ofstream out(outfilename);
             out << "Simulation Parameters:\n";
             out << "Trace Prefix: " << tracebase << "\n";
@@ -190,10 +192,12 @@ void Simulator::print_stats(const string& outfilename, const string& tracebase) 
                 out << "  Writebacks: " << caches[i].writebacks << "\n";
                 out << "  Invalidations: " << caches[i].invalidations << "\n";
                 out << "  Bus traffic: " << caches[i].bus_traffic << " bytes\n";
+                total_traffic += caches[i].bus_traffic;
+                total_transaction += caches[i].bus_transaction;
             }
             out << "\nOverall Bus Summary:\n";
-            out << "Total Bus Transactions: TO BE DONE" << "\n";
-            out << "Total Bus Traffic (Bytes): TO BE DONE"<< "\n";
+            out << "Total Bus Transactions: " << total_transaction << "\n";
+            out << "Total Bus Traffic (Bytes): " << total_traffic << "\n";
         }
 
 
