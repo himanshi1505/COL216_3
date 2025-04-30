@@ -105,6 +105,7 @@ void Simulator::run() {
                     }
                     cache.set_pending_state(INVALID);
                     cache.set_blocked(false);
+                   
                     
                 }
                 // // cout << cache.get_block_cycles_left() << endl;
@@ -174,7 +175,7 @@ void Simulator::print_stats(const string& outfilename, const string& tracebase) 
             out << "Block Bits: " << b << "\n";
             out << "Block Size (Bytes): " << pow(2,b) << "\n";
             out << "Number of Sets: " << pow(2,s) << "\n";
-            out << "Cache Size (KB per core): TO BE CONFIRMED " << pow(2,s) * pow(2,b) * E /1024 << "\n";
+            out << "Cache Size (KB per core): " << pow(2,s) * pow(2,b) * E /1024 << "\n";
             out << "MESI Protocol: Enabled\n";
             out << "Write Policy: Write-back, Write-allocate\n";
             out << "Replacement Policy: LRU\n";
@@ -186,7 +187,7 @@ void Simulator::print_stats(const string& outfilename, const string& tracebase) 
                 out << "  Misses: " << caches[i].misses << "\n";
                 out << "  Execution cycles: " << caches[i].execution_cycles << "\n";
                 out << "  Idle cycles: " << caches[i].idle_cycles << "\n";
-                out << "  Miss rate: " << fixed << setprecision(4)
+                out << "  Miss rate: " << fixed << setprecision(2)
                     << (double)100 * caches[i].misses / (double)  (caches[i].reads + caches[i].writes) << "%\n";
                 out << "  Evictions: " << caches[i].evictions << "\n";
                 out << "  Writebacks: " << caches[i].writebacks << "\n";

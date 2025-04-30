@@ -12,6 +12,7 @@ public:
     ~Simulator();
     void run();
     void print_stats(const std::string& outfilename, const std::string& tracebase);
+    uint64_t get_global_cycles() { return global_cycle;}
 
 private:
     int s, E, b, S, B;

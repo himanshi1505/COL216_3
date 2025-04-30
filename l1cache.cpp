@@ -49,7 +49,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
 
     if (line  && line->state != INVALID) {
         // Cache hit
-        line->lru_counter = global_cycle; // ASSUMPTION even if bus is busy we update LRU COUNTER
+        line->lru_counter = global_cycle; 
         if (op == 'R') {
             reads++;
         } else if (op == 'W') {
@@ -68,7 +68,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
                     idle_cycles++;
                     return false;
                 }
-                         //ASSUMPTION BUS CANT BE USED FOR INVALIDATIONS IF BUSY 
+                        
                 invalidations++;
                 // int x = 0;
                 // for (size_t i = 0; i < all_caches.size(); ++i) {
@@ -87,7 +87,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
                 bus_transaction++;
                 process_busupgr(addr, all_caches);
             }   
-            //ASSUMPTION( DO NOTY WRITE) WE DONT HAVE TO WRITEBACK IN CASE OF M hit
+           
             writes++;
             line->state = MODIFIED;
             line->dirty = true;
@@ -204,7 +204,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     int transfer_cycles = 0;
     if (op == 'R') {
         if (found_in_M) {
-            transfer_cycles = (2 * B/4 )+100 ; // transfer and writeback  //ASSUMPTION CHECK HOW MANY TRANSFER CYCLE IN EACH CASE
+            transfer_cycles = (2 * B/4 )+100 ; // transfer and writeback  
             writebacks++;
             bus_transaction++;
             bus.start(BusRd, addr, core_id, transfer_cycles);
