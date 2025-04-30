@@ -21,16 +21,14 @@ L1Cache::L1Cache(int s_, int E_, int b_, int core_id_)
 
 CacheLine* L1Cache::find_line(uint32_t tag, uint32_t set_idx) {
     for (auto& line : sets[set_idx].lines) {
-        //cout << tag << endl << line.tag << endl << endl;
+
         if ( line.tag == tag ) {
-            //cout << 5 << endl;
             return &line;
         }
     }
     return nullptr;
 }
 
-//test
 CacheLine* L1Cache::find_lru(uint32_t set_idx) {
     auto& lines = sets[set_idx].lines;
     return &(*std::min_element(lines.begin(), lines.end(),
@@ -42,7 +40,6 @@ CacheLine* L1Cache::find_lru(uint32_t set_idx) {
 bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>& all_caches, uint64_t global_cycle) {
     uint32_t tag = addr >> (s + b);
     uint32_t set_idx = (addr >> b) & ((1 << s) - 1);
-    //cout<<"set_idx: " << set_idx << endl;
 
     CacheLine* line = find_line(tag, set_idx);
  
@@ -57,7 +54,6 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             
             if (line->state == SHARED) {
      
-                //bus.start(BusUpgr, addr, core_id, 1);
                 if (get_blocked() && bus.busy())
                 {
                     execution_cycles++;
@@ -70,20 +66,6 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
                 }
                         
                 invalidations++;
-                // int x = 0;
-                // for (size_t i = 0; i < all_caches.size(); ++i) {
-                //     if (i == static_cast<size_t>(core_id)) continue;
-                //     CacheLine* other = all_caches[i].find_line(tag, set_idx);
-                   
-                   
-                //     if (other && other->state == SHARED) {
-                //         x++;
-                //     }
-                // }
-                // if (x == 0)
-                // {
-                //     exit(-1);
-                // }
                 bus_transaction++;
                 process_busupgr(addr, all_caches);
             }   
@@ -92,13 +74,12 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             line->state = MODIFIED;
             line->dirty = true;
         }
-        //line->lru_counter = global_cycle;
-        //cout << 2 <<  endl;;
+
         execution_cycles++;
         return true;
     }
   
-    //somethingn fring wrong here
+
     if (get_blocked() && bus.busy())
     {
         execution_cycles++;
@@ -111,12 +92,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     }
 
     // Cache miss
-    
-    
 
-    
-    
-    
     // 1. Search for an invalid line (empty slot) in the set
     CacheLine* target_line = nullptr;
     for (auto& line : sets[set_idx].lines) {
@@ -127,8 +103,6 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     }
 
     // 2. If no invalid line found, evict LRU
-
-    //test
     if (!target_line) {
         target_line = find_lru(set_idx);
         evictions++;  // True eviction
@@ -167,7 +141,7 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             return false;
         }
 
-        target_line->state = INVALID; // Writeback // do we need to increase the invalidation count?
+        target_line->state = INVALID; // Writeback 
        
     }
     blocked = true;
@@ -175,21 +149,17 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
     blocked_addr = addr;
     //now line is the line to be used, and hence the line will no more be empty
     target_line->tag = tag;
-    target_line->lru_counter = global_cycle; //lrcounter is set to start touch of change 
+    target_line->lru_counter = global_cycle; //lrcounter is set to start 
     target_line->empty = false;
     if (op == 'R'){
         reads++;
-        //cout<<"read miss"<<global_cycle<<endl;
     }  else{
         writes++;
-        //cout<<"write miss"<<global_cycle<<endl;
-
     } 
 
     
     bool found_in_other = false;
     bool found_in_M = false;
-    //cout<<all_caches.size()<<endl;
     for (size_t i = 0; i < all_caches.size(); ++i) {
         if (i == static_cast<size_t>(core_id)) continue;
         CacheLine* other = all_caches[i].find_line(tag, set_idx);
@@ -209,7 +179,6 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             bus_transaction++;
             bus.start(BusRd, addr, core_id, transfer_cycles);
             process_busrd(addr, all_caches); // change others to SHARED
-            //all_caches[owner].find_line(tag, set_idx)->state = SHARED;
             pending_state = SHARED;
             bus_traffic += B;
             
@@ -221,14 +190,12 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             pending_state = SHARED;
             bus_traffic += B;
         } else {
-            //cout<<"here"<<endl;
             transfer_cycles = 100; //read from mem to cache
             bus_transaction++;
             bus.start(BusRd, addr, core_id, transfer_cycles);
             pending_state = EXCLUSIVE;
             bus_traffic += B;
         }
-        //cout<<"bus read"<<bus.transfer_cycle_left()<<endl;
     } else { // Write miss (BusRdX)
         if (found_in_M) {
             // Case 3: Dirty copy exists (M state)
@@ -238,7 +205,6 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             writebacks++;
             bus_transaction++;
             // Force writeback and invalidate owner
-            //all_caches[owner].find_line(tag, set_idx)->state = INVALID;
             process_busrdx(addr, all_caches); // Invalidate others
             invalidations++;
             bus_traffic += 2 * B; // Count writeback + transfer
@@ -259,7 +225,6 @@ bool L1Cache::try_access(char op, uint32_t addr, Bus& bus, std::vector<L1Cache>&
             bus_traffic += B;
             bus_transaction++;
         }
-       // cout<<"bus write"<<bus.transfer_cycle_left()<<endl;
         pending_state = MODIFIED;
     }
         block_cycles_left = transfer_cycles;
@@ -287,10 +252,8 @@ void L1Cache::snoop(const BusTransaction& trans) {
         case BusRdX:
             line->state = INVALID;
             line->empty = true; // Mark as empty
-            // invalidations++;
             break;
         case BusUpgr:
-            // invalidations++;
            line->empty = true; // Mark as empty
             line->state = INVALID;
             break;

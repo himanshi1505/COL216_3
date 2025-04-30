@@ -13,48 +13,48 @@ Bus: Central snooping bus
 Core 0:
   Reads: 2380720
   Writes: 889412
-  Misses: 184169
-  Execution cycles: 20374032
-  Idle cycles: 16635139
+  Misses: 184178
+  Execution cycles: 20413872
+  Idle cycles: 17671055
   Miss rate: 5.63%
-  Evictions: 183951
-  Writebacks: 26253
-  Invalidations: 143
-  Bus traffic: 6733312 bytes
+  Evictions: 183930
+  Writebacks: 26286
+  Invalidations: 183
+  Bus traffic: 6733984 bytes
 Core 1:
   Reads: 2388005
   Writes: 899247
-  Misses: 183976
-  Execution cycles: 20290296
-  Idle cycles: 24439277
+  Misses: 183970
+  Execution cycles: 20414864
+  Idle cycles: 23233428
   Miss rate: 5.60%
-  Evictions: 183721
-  Writebacks: 27588
-  Invalidations: 111
-  Bus traffic: 6769440 bytes
+  Evictions: 183692
+  Writebacks: 27581
+  Invalidations: 136
+  Bus traffic: 6769504 bytes
 Core 2:
   Reads: 74523
   Writes: 43175
-  Misses: 8256
-  Execution cycles: 850130
-  Idle cycles: 31978428
+  Misses: 8255
+  Execution cycles: 825086
+  Idle cycles: 26180349
   Miss rate: 7.01%
-  Evictions: 8118
-  Writebacks: 2821
-  Invalidations: 16
-  Bus traffic: 354496 bytes
+  Evictions: 8127
+  Writebacks: 2820
+  Invalidations: 12
+  Bus traffic: 354560 bytes
 Core 3:
   Reads: 2416052
   Writes: 908867
-  Misses: 184829
-  Execution cycles: 20691187
-  Idle cycles: 42978986
+  Misses: 184836
+  Execution cycles: 20695247
+  Idle cycles: 42735035
   Miss rate: 5.56%
-  Evictions: 184669
-  Writebacks: 25710
-  Invalidations: 7
-  Bus traffic: 6738016 bytes
+  Evictions: 184665
+  Writebacks: 25707
+  Invalidations: 10
+  Bus traffic: 6738208 bytes
 
 Overall Bus Summary:
-Total Bus Transactions: 643581
-Total Bus Traffic (Bytes): 20595264
+Total Bus Transactions: 643573
+Total Bus Traffic (Bytes): 20596256
