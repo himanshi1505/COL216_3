@@ -1,5 +1,5 @@
 Simulation Parameters:
-Trace Prefix: app2
+Trace Prefix: app1
 Set Index Bits: 6
 Associativity: 2
 Block Bits: 5
@@ -11,50 +11,50 @@ Write Policy: Write-back, Write-allocate
 Replacement Policy: LRU
 Bus: Central snooping bus
 Core 0:
-  Reads: 2380720
-  Writes: 889412
-  Misses: 184178
-  Execution cycles: 20413872
-  Idle cycles: 17671055
-  Miss rate: 5.63%
-  Evictions: 183930
-  Writebacks: 26286
-  Invalidations: 183
-  Bus traffic: 6733984 bytes
+  Reads: 1489888
+  Writes: 1007461
+  Misses: 35710
+  Execution cycles: 5666317
+  Idle cycles: 3532235
+  Miss rate: 1.43%
+  Evictions: 35544
+  Writebacks: 7156
+  Invalidations: 34
+  Bus traffic: 1371456 bytes
 Core 1:
-  Reads: 2388005
-  Writes: 899247
-  Misses: 183970
-  Execution cycles: 20414864
-  Idle cycles: 23233428
-  Miss rate: 5.60%
-  Evictions: 183692
-  Writebacks: 27581
-  Invalidations: 136
-  Bus traffic: 6769504 bytes
+  Reads: 1485857
+  Writes: 1004611
+  Misses: 35194
+  Execution cycles: 5598200
+  Idle cycles: 4666837
+  Miss rate: 1.41%
+  Evictions: 35030
+  Writebacks: 6785
+  Invalidations: 37
+  Bus traffic: 1342784 bytes
 Core 2:
-  Reads: 74523
-  Writes: 43175
-  Misses: 8255
-  Execution cycles: 825086
-  Idle cycles: 26180349
-  Miss rate: 7.01%
-  Evictions: 8127
-  Writebacks: 2820
-  Invalidations: 12
-  Bus traffic: 354560 bytes
+  Reads: 1492629
+  Writes: 1016428
+  Misses: 40687
+  Execution cycles: 6142465
+  Idle cycles: 9737463
+  Miss rate: 1.62%
+  Evictions: 40502
+  Writebacks: 10475
+  Invalidations: 127
+  Bus traffic: 1637248 bytes
 Core 3:
-  Reads: 2416052
-  Writes: 908867
-  Misses: 184836
-  Execution cycles: 20695247
-  Idle cycles: 42735035
-  Miss rate: 5.56%
-  Evictions: 184665
-  Writebacks: 25707
-  Invalidations: 10
-  Bus traffic: 6738208 bytes
+  Reads: 1493736
+  Writes: 1009391
+  Misses: 35882
+  Execution cycles: 5683195
+  Idle cycles: 11779546
+  Miss rate: 1.43%
+  Evictions: 35686
+  Writebacks: 6968
+  Invalidations: 9
+  Bus traffic: 1371936 bytes
 
 Overall Bus Summary:
-Total Bus Transactions: 643573
-Total Bus Traffic (Bytes): 20596256
+Total Bus Transactions: 178752
+Total Bus Traffic (Bytes): 5723424

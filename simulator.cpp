@@ -97,6 +97,9 @@ void Simulator::run() {
             istringstream iss(next_line[core]);
             char op;
             string addr_str;
+            if (!(iss >> op >> addr_str)) {
+                exit(-1);
+            }
             uint32_t addr = stoul(addr_str, nullptr, 16);
 
             // Try to access (returns true if op was started, false if needs to wait for bus)
